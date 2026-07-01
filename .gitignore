@@ -1,1 +1,19 @@
-/build/
+# Maven
+target/
+
+# Gradle
+build/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+
+# VS Code
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
