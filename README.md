@@ -143,18 +143,31 @@ http://localhost:8080
 
 ---
 
-## Screenshots
+## 📸 Screenshots
 
-Add screenshots of:
+### Home Page
+![Home Page](screenshots/homepage.png)
 
-- Login Page
-- Registration Page
-- Dashboard
-- Add Subscription
-- Subscription List
-- Email Reminder Notification
+### Login Page
+![Login Page](screenshots/login-page.png)
 
----
+### Dashboard
+![Dashboard](screenshots/dashboard.png)
+
+### Analytics
+![Analytics](screenshots/analytics.png)
+
+### Premium Analytics
+![Premium Analytics](screenshots/premium-analytics.png)
+
+### Payment Gateway
+![Payment Gateway](screenshots/payment-gateway.png)
+
+### Payment Success
+![Payment Success](screenshots/payment-success.png)
+
+### Email Reminder
+![Email Reminder](screenshots/email-reminder.png)
 
 ## Future Enhancements
 
