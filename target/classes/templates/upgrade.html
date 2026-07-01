@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upgrade to Premium - SubTrackr</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <style>
+        .pricing-card {
+            background-color: var(--bg-navy-light);
+            border: 2px solid #6366F1;
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            max-width: 450px;
+            margin: 0 auto;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.2);
+        }
+        .popular-badge {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(90deg, #6366F1, #8B5CF6);
+            color: #ffffff;
+            padding: 4px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+        .btn-downgrade {
+            padding: 0.5rem 1rem; 
+            color: #F8FAFC; 
+            margin-right: 0.5rem;
+            transition: all 0.2s ease;
+        }
+        .btn-downgrade:hover {
+            color: #EF4444;
+            border-color: #EF4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar scrolled">
+        <div class="container">
+            <div style="display: flex; align-items: center; gap: 2rem;">
+                <a th:href="@{/}" class="nav-brand">SubTrackr</a>
+                <ul class="nav-links" style="margin-bottom: 0;">
+                    <li><a th:href="@{/dashboard}">Dashboard</a></li>
+                    <li>
+                        <a th:href="${session.sessionUser != null and session.sessionUser.plan == 'premium'} ? @{/premium-analytics} : @{/analytics}">Analytics</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="nav-actions" th:if="${session.sessionUser != null}">
+                <span style="color: var(--text-muted); margin-right: 1rem;">
+                    Hello, <span th:text="${#strings.contains(session.sessionUser.fullName, ' ') ? #strings.arraySplit(session.sessionUser.fullName, ' ')[0] : session.sessionUser.fullName}">User</span>
+                </span>
+                <button th:if="${session.sessionUser.plan == 'premium'}" type="button" class="btn btn-ghost btn-downgrade" onclick="document.getElementById('downgradeModal').style.display='flex'">Downgrade</button>
+                <a th:if="${session.sessionUser.plan != 'premium'}" th:href="@{/upgrade}" class="btn btn-ghost" style="padding: 0.5rem 1rem; color: #10B981; border: 1px solid #10B981; margin-right: 0.5rem;">Upgrade</a>
+                
+                <form th:action="@{/auth}" method="POST" style="display:inline;">
+                    <input type="hidden" name="action" value="logout">
+                    <button type="submit" class="btn btn-ghost" style="padding: 0.5rem 1rem;">Logout</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-container" style="text-align: center;" th:if="${session.sessionUser != null}">
+        <h2 style="font-size: 2.5rem; margin-bottom: 1rem;">Upgrade your Tracking</h2>
+        <p style="color: var(--text-muted); font-size: 1.1rem; max-width: 600px; margin: 0 auto;">Unlock advanced analytics, visual calendars, and personalized financial insights to master your subscriptions.</p>
+        
+        <div style="margin-top: 3rem;">
+            <div class="pricing-card">
+                <div class="popular-badge">MOST POPULAR</div>
+                
+                <h3 style="font-size: 1.75rem; color: var(--text-white);">SubTrackr Premium</h3>
+                <div style="font-size: 3rem; font-weight: bold; color: #6366F1; margin: 1.5rem 0;">
+                    ₹149<span style="font-size: 1rem; color: var(--text-muted); font-weight: normal;">/month</span>
+                </div>
+                
+                <ul class="premium-feature-list" style="max-width: 300px; margin: 0 auto 2.5rem auto;">
+                    <li>Unlimited Active Subscriptions</li>
+                    <li>Visual Grid Renewal Calendar</li>
+                    <li>Advanced Category Analytics</li>
+                    <li>AI-Powered Savings Recommendations</li>
+                    <li>5-Day Premium Alert Emails</li>
+                </ul>
+                
+                <button th:if="${session.sessionUser.plan == 'premium'}" disabled class="btn btn-primary" style="width: 100%; opacity: 0.5; cursor: not-allowed; padding: 1rem;">Already Subscribed</button>
+                
+                <div th:if="${session.sessionUser.plan != 'premium'}">
+                    <button type="button" onclick="startUpgrade()" class="btn btn-primary" style="width: 100%; font-size: 1.1rem; padding: 1rem; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);">
+                        Upgrade Now
+                    </button>
+                    <p id="cancelMsg" style="display:none; color:#94A3B8; margin-top:1rem; text-align:center;">
+                        Payment cancelled. You can try again anytime.
+                    </p>
+                    <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 1rem;">Test Mode Payment Active</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Downgrade Modal -->
+    <div id="downgradeModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+      <div style="background:var(--bg-navy-light); border:1px solid #EF4444; border-radius:16px; padding:2.5rem; max-width:420px; width:90%; text-align:center; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+        <div style="font-size:2.5rem; margin-bottom:1rem;">⬇️</div>
+        <h2 style="color:var(--text-white); margin-bottom:0.75rem;">Downgrade to Basic?</h2>
+        <p style="color:var(--text-muted); margin-bottom:2rem; line-height:1.6;">You will lose access to premium analytics, smart recommendations, and the renewal calendar. You will be limited to 4 subscriptions.</p>
+        <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+          <form method="post" th:action="@{/user}" style="display:inline;">
+            <input type="hidden" name="action" value="downgradePlan"/>
+            <button type="submit" style="background:#EF4444; color:white; padding:0.75rem 1.5rem; border-radius:10px; border:none; cursor:pointer; font-weight:600;">Yes, Downgrade</button>
+          </form>
+          <button onclick="document.getElementById('downgradeModal').style.display='none'" style="background:transparent; border:1px solid var(--border-color); color:var(--text-muted); padding:0.75rem 1.5rem; border-radius:10px; cursor:pointer;">Keep Premium</button>
+        </div>
+      </div>
+    </div>
+
+    <script th:inline="javascript">
+    async function startUpgrade() {
+        try {
+            const createOrderUrl = /*[[@{/premium(action='createOrder')}]]*/ '/premium?action=createOrder';
+            const verifyPaymentUrl = /*[[@{/premium(action='verifyPayment')}]]*/ '/premium?action=verifyPayment';
+            const successUrl = /*[[@{/payment-success}]]*/ '/payment-success';
+
+            // Step 1: Create Razorpay order
+            const res = await fetch(createOrderUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            });
+
+            if (!res.ok) {
+                alert('Failed to create order. Please try again.');
+                return;
+            }
+
+            const data = await res.json();
+            console.log('Order created:', data);
+
+            if (!data.orderId) {
+                alert('Order ID missing. Check server logs.');
+                return;
+            }
+
+            // Step 2: Open Razorpay checkout
+            const options = {
+                key: 'rzp_test_SeRfXnv1DSc0sA', 
+                amount: data.amount,
+                currency: data.currency,
+                name: 'SubTrackr',
+                description: 'Premium Plan - 1 Month',
+                order_id: data.orderId,
+                theme: { color: '#6366F1' },
+                handler: async function(response) {
+                    // Step 3: Verify payment
+                    const verifyRes = await fetch(verifyPaymentUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: 'razorpay_order_id=' + response.razorpay_order_id +
+                              '&razorpay_payment_id=' + response.razorpay_payment_id +
+                              '&razorpay_signature=' + response.razorpay_signature
+                    });
+
+                    if (verifyRes.redirected) {
+                        window.location.href = verifyRes.url;
+                    } else {
+                        window.location.href = successUrl;
+                    }
+                },
+                modal: {
+                    ondismiss: function() {
+                        document.getElementById('cancelMsg').style.display = 'block';
+                    }
+                }
+            };
+
+            const rzp = new Razorpay(options);
+            rzp.open();
+
+        } catch (err) {
+            console.error('Upgrade error:', err);
+            alert('Something went wrong. Check browser console for details.');
+        }
+    }
+    
+    document.getElementById('downgradeModal').addEventListener('click', function(e) {
+        if (e.target === this) this.style.display = 'none';
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') document.getElementById('downgradeModal').style.display = 'none';
+    });
+    </script>
+</body>
+</html>

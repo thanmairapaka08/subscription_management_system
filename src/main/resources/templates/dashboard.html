@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - SubTrackr</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <link rel="stylesheet" th:href="@{/css/dashboard.css}">
+    <style>
+        .premium-banner {
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border-bottom: 1px solid var(--accent-indigo);
+            padding: 0.75rem;
+            text-align: center;
+            font-size: 0.875rem;
+            color: var(--text-white);
+        }
+        .premium-banner.warning {
+            background: linear-gradient(90deg, rgba(234, 179, 8, 0.1) 0%, rgba(217, 119, 6, 0.1) 100%);
+            border-bottom: 1px solid #D97706;
+        }
+        .premium-banner a {
+            color: var(--success-emerald);
+            font-weight: bold;
+            margin-left: 0.5rem;
+            text-decoration: underline;
+        }
+        .btn-downgrade {
+            padding: 0.5rem 1rem; 
+            color: var(--text-white); 
+            margin-right: 0.5rem;
+            transition: all 0.2s ease;
+        }
+        .btn-downgrade:hover {
+            color: #DC2626;
+            border-color: #DC2626;
+            background: rgba(220, 38, 38, 0.1);
+        }
+    </style>
+</head>
+<body>
+    
+    <div th:if="${session.sessionUser != null and session.sessionUser.plan == 'basic'}">
+        <div class="premium-banner" th:if="${subscriptionCount >= 4}">
+            You are on the Free plan (<span th:text="${subscriptionCount}">0</span>/4 subscriptions). Upgrade to Premium for unlimited subscriptions and advanced analytics.
+            <a th:href="@{/upgrade}">Upgrade Now</a>
+        </div>
+        <div class="premium-banner warning" th:if="${subscriptionCount == 3}">
+            You have 1 subscription slot remaining on the free plan.
+            <a th:href="@{/upgrade}">Learn about Premium</a>
+        </div>
+    </div>
+    
+    <nav class="navbar scrolled">
+        <div class="container">
+            <div style="display: flex; align-items: center; gap: 2rem;">
+                <a th:href="@{/}" class="nav-brand">SubTrackr</a>
+                <ul class="nav-links" style="margin-bottom: 0;">
+                    <li><a th:href="@{/dashboard}">Dashboard</a></li>
+                    <li>
+                        <a th:href="${session.sessionUser != null and session.sessionUser.plan == 'premium'} ? @{/premium-analytics} : @{/analytics}">Analytics</a>
+                    </li>
+                    <li th:if="${session.sessionUser != null and session.sessionUser.role == 'admin'}">
+                        <a th:href="@{/admin}" style="color: #ef4444; font-weight: bold;">Admin Panel</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="nav-actions" th:if="${session.sessionUser != null}">
+                <span style="color: var(--text-muted); margin-right: 1rem;">
+                    Hello, <span th:text="${#strings.contains(session.sessionUser.fullName, ' ') ? #strings.arraySplit(session.sessionUser.fullName, ' ')[0] : session.sessionUser.fullName}">User</span>
+                </span>
+                <button th:if="${session.sessionUser.plan == 'premium'}" type="button" class="btn btn-ghost btn-downgrade" onclick="document.getElementById('downgradeModal').style.display='flex'">Downgrade</button>
+                <a th:if="${session.sessionUser.plan != 'premium'}" th:href="@{/upgrade}" class="btn btn-ghost" style="padding: 0.5rem 1rem; color: #10B981; border: 1px solid #10B981; margin-right: 0.5rem;">Upgrade</a>
+                
+                <form th:action="@{/auth}" method="POST" style="display:inline;">
+                    <input type="hidden" name="action" value="logout">
+                    <button type="submit" class="btn btn-ghost" style="padding: 0.5rem 1rem;">Logout</button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <div th:if="${param.success != null}" style="background: rgba(16, 185, 129, 0.1); border-left: 4px solid #10B981; padding: 1rem; margin-bottom: 1rem; color: #10B981;">
+            Plan successfully updated.
+        </div>
+        <div th:if="${errorMessage}" style="background: rgba(239, 68, 68, 0.1); border-left: 4px solid #EF4444; padding: 1rem; margin-bottom: 1rem; color: #EF4444;" th:text="${errorMessage}">
+            Error message.
+        </div>
+
+        <div class="dashboard-header">
+            <h2>Your Subscriptions</h2>
+            <button class="btn btn-primary" onclick="return handleAddSubscription()">+ Add Subscription</button>
+        </div>
+
+        <div class="summary-cards">
+            <div class="stat-card">
+                <div class="stat-title">Total Monthly Spend</div>
+                <div class="stat-value" th:text="'₹' + ${#numbers.formatDecimal(totalMonthlySpend, 1, 2)}">₹0.00</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Active Subscriptions</div>
+                <div class="stat-value" th:text="${subscriptionCount}">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Upcoming Renewals (7 Days)</div>
+                <div class="stat-value" th:text="${upcomingRenewals}">0</div>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column;">
+            <div th:if="${subscriptions != null and !subscriptions.isEmpty()}">
+                <div class="subscription-card-row" th:each="s : ${subscriptions}">
+                    <div class="sub-left">
+                        <div class="sub-name" th:text="${s.name}">Subscription</div>
+                        <div class="sub-cat-pill" th:text="${s.category}">Category</div>
+                    </div>
+                    
+                    <div class="sub-middle">
+                        <div class="sub-amount">
+                            <span th:text="'₹' + ${#numbers.formatDecimal(s.amount, 1, 2)}">₹0.00</span>
+                            <span style="color:var(--text-muted); font-size:0.85rem; font-weight:normal;" th:text="'/' + ${s.billingCycle}">/monthly</span>
+                        </div>
+                        <div style="color: var(--text-muted); font-size: 0.85rem;">Renews: <span style="color:var(--text-white);" th:text="${s.renewalDate}">2026-07-01</span></div>
+                    </div>
+
+                    <div class="sub-right">
+                        <div th:if="${s.status == 'active'}" class="sub-status-active">● Active</div>
+                        <div th:if="${s.status == 'paused'}" class="sub-status-paused">● Paused</div>
+                        <div th:if="${s.status != 'active' and s.status != 'paused'}" class="sub-status-cancelled">● Cancelled</div>
+                        
+                        <div class="sub-actions">
+                            <form method="post" th:action="@{/subscription}" style="display:inline;">
+                                <input type="hidden" name="action" value="pause"/>
+                                <input type="hidden" name="subscriptionId" th:value="${s.id}"/>
+                                <input type="hidden" name="currentStatus" th:value="${s.status}"/>
+                                <button type="submit" class="sub-btn btn-warning-sm" 
+                                        th:style="'color: ' + (${s.status == 'paused'} ? 'var(--success-emerald)' : '#D97706') + ';'"
+                                        th:text="${s.status == 'paused'} ? 'Resume' : 'Pause'">
+                                    Pause
+                                </button>
+                            </form>
+                            
+                            <form method="post" th:action="@{/subscription}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this?');">
+                                <input type="hidden" name="action" value="delete"/>
+                                <input type="hidden" name="subscriptionId" th:value="${s.id}"/>
+                                <button type="submit" class="sub-btn btn-danger-sm" style="color:#EF4444;">Delete</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div th:if="${subscriptions == null or subscriptions.isEmpty()}" class="empty-state">
+                <div style="font-size: 4rem; margin-bottom: 1rem; line-height: 1;">📋</div>
+                <p style="font-size: 1.25rem; font-weight: 500; color: var(--text-white); margin-bottom: 0.5rem;">No subscriptions yet</p>
+                <p style="margin-bottom: 1.5rem;">Add your first subscription to start tracking</p>
+                <button class="btn btn-primary" onclick="return handleAddSubscription()">+ Add Subscription</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upgrade Modal -->
+    <div id="upgradeModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+      <div style="background:var(--bg-navy-light); border:1px solid #6366F1; border-radius:16px; padding:2.5rem; max-width:420px; width:90%; text-align:center; box-shadow: 0 4px 20px rgba(99,102,241,0.2);">
+        <div style="font-size:2.5rem; margin-bottom:1rem;">🔒</div>
+        <h2 style="color:var(--text-white); margin-bottom:0.75rem;">You've reached your free limit</h2>
+        <p style="color:var(--text-muted); margin-bottom:2rem; line-height:1.6;">Free plan allows up to 4 subscriptions. Upgrade to Premium for unlimited subscriptions, advanced analytics, renewal calendar, and smart recommendations.</p>
+        <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+          <a th:href="@{/upgrade}" style="background:#6366F1; color:white; padding:0.75rem 1.5rem; border-radius:10px; text-decoration:none; font-weight:600;">Upgrade to Premium ₹149/month</a>
+          <button onclick="document.getElementById('upgradeModal').style.display='none'" style="background:transparent; border:1px solid var(--border-color); color:var(--text-muted); padding:0.75rem 1.5rem; border-radius:10px; cursor:pointer;">Maybe Later</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Downgrade Modal -->
+    <div id="downgradeModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
+      <div style="background:var(--bg-navy-light); border:1px solid #EF4444; border-radius:16px; padding:2.5rem; max-width:420px; width:90%; text-align:center; box-shadow: 0 4px 20px rgba(0,0,0,0.1);">
+        <div style="font-size:2.5rem; margin-bottom:1rem;">⬇️</div>
+        <h2 style="color:var(--text-white); margin-bottom:0.75rem;">Downgrade to Basic?</h2>
+        <p style="color:var(--text-muted); margin-bottom:2rem; line-height:1.6;">You will lose access to premium analytics, smart recommendations, and the renewal calendar. You will be limited to 4 subscriptions.</p>
+        <div style="display:flex; gap:1rem; justify-content:center; flex-wrap:wrap;">
+          <form method="post" th:action="@{/user}" style="display:inline;">
+            <input type="hidden" name="action" value="downgradePlan"/>
+            <button type="submit" style="background:#EF4444; color:white; padding:0.75rem 1.5rem; border-radius:10px; border:none; cursor:pointer; font-weight:600;">Yes, Downgrade</button>
+          </form>
+          <button onclick="document.getElementById('downgradeModal').style.display='none'" style="background:transparent; border:1px solid var(--border-color); color:var(--text-muted); padding:0.75rem 1.5rem; border-radius:10px; cursor:pointer;">Keep Premium</button>
+        </div>
+      </div>
+    </div>
+
+    <script th:inline="javascript">
+        function handleAddSubscription() {
+            /*[[${session.sessionUser != null ? session.sessionUser.plan : 'basic'}]]*/
+            const userPlan = [[${session.sessionUser != null ? session.sessionUser.plan : 'basic'}]];
+            const subCount = parseInt([[${subscriptionCount}]]);
+            if (userPlan === 'basic' && subCount >= 4) {
+                document.getElementById('upgradeModal').style.display = 'flex';
+                return false;
+            }
+            window.location.href = /*[[@{/subscription/add}]]*/ '/subscription/add';
+            return true;
+        }
+
+        window.addEventListener('load', function() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('error') === 'limit_reached') {
+                document.getElementById('upgradeModal').style.display = 'flex';
+            }
+        });
+        
+        document.getElementById('upgradeModal').addEventListener('click', function(e) {
+            if (e.target === this) this.style.display = 'none';
+        });
+        
+        document.getElementById('downgradeModal').addEventListener('click', function(e) {
+            if (e.target === this) this.style.display = 'none';
+        });
+        
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.getElementById('upgradeModal').style.display = 'none';
+                document.getElementById('downgradeModal').style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

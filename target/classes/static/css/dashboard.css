@@ -1,0 +1,181 @@
+/* dashboard.css */
+body {
+    background-color: var(--bg-navy);
+    color: var(--text-white);
+    font-family: var(--font-inter);
+}
+
+.dashboard-container {
+    padding: 6rem 2rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.stat-card {
+    background-color: var(--bg-navy-light);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: transform 0.2s;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}
+
+.stat-title {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--text-white);
+}
+
+/* Fix 3 Component: Subscription Row Card */
+.subscription-card-row {
+    background: var(--bg-navy-light);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    padding: 1rem 1.5rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}
+.sub-left { display: flex; flex-direction: column; gap: 0.25rem; flex: 1; }
+.sub-name { font-weight: bold; color: var(--text-white); font-size: 1.1rem; }
+.sub-cat-pill {
+    background: rgba(99,102,241,0.1);
+    color: #4F46E5;
+    font-size: 0.75rem;
+    padding: 2px 10px;
+    border-radius: 20px;
+    display: inline-block;
+    width: max-content;
+    text-transform: capitalize;
+}
+.sub-middle { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.9rem; flex: 1; }
+.sub-amount { color: #4F46E5; font-weight: 600; font-size: 1rem; }
+.sub-right { display: flex; align-items: center; gap: 1.5rem; }
+.sub-status-active { color: #059669; font-weight: 600; font-size: 0.85rem; }
+.sub-status-paused { color: #D97706; font-weight: 600; font-size: 0.85rem; }
+.sub-status-cancelled { color: #DC2626; font-weight: 600; font-size: 0.85rem; }
+
+.sub-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+.sub-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-muted);
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: 0.2s;
+}
+.sub-btn-pause:hover, .sub-btn-resume:hover { border-color: #D97706; color: #D97706; }
+.sub-btn-resume:hover { border-color: #059669; color: #059669; }
+.sub-btn-delete:hover { border-color: #DC2626; color: #DC2626; }
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: var(--text-muted);
+}
+
+.chart-wrapper {
+    background-color: var(--bg-navy-light);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    padding: 1.5rem;
+    height: 300px;
+    position: relative;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+/* Fix 1: Analytics Category Section */
+.category-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3rem;
+    padding: 2rem;
+    background: var(--bg-navy-light);
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+.category-chart-box {
+    width: 220px;
+    height: 220px;
+    flex-shrink: 0;
+    position: relative;
+}
+.category-legend {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+.category-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.88rem;
+    color: var(--text-white);
+    text-transform: capitalize;
+}
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Add Subscription Form adjustments */
+.form-card {
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+    .summary-cards {
+        grid-template-columns: 1fr;
+    }
+    .subscription-card-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+    }
+    .sub-middle { width: 100%; border-top: 1px solid #334155; padding-top: 0.75rem; }
+    .sub-right { width: 100%; justify-content: space-between; border-top: 1px solid #334155; padding-top: 0.75rem; }
+    .category-section {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+}
